@@ -1,13 +1,16 @@
 import scrapy
 import os
 
-class DoesSpider(scrapy.Spider):
-    name = "diarios"
+class YearSpider(scrapy.Spider):
+    name = "yearspider"
     allowed_domains = ['www.diariooficial.gob.sv']
     direccion_base = 'descargas\\' #Direccion donde se guardaran los documentos descargados
-    start_urls = [
-        'https://www.diariooficial.gob.sv/diarios/'
-    ]
+    directorio = ''
+
+    def start_requests(self):
+        self.directorio = input('Ingresa la carpeta a descargar (formato: do-YYYY o YYYY cuando es inferior a 1954): ')
+        url = 'https://www.diariooficial.gob.sv/diarios/'+ self.directorio
+        yield scrapy.Request(url=url, callback=self.parse)
 
     def save(self, path, data):
         with open(path, 'wb') as f:
@@ -25,7 +28,10 @@ class DoesSpider(scrapy.Spider):
             path = os.path.join(path,mes)
         return path
 
+
     def parse(self, response):
+        if (response.url.find(self.directorio) == -1):
+            return
         diario = response.url.split("/")[-1]
         if (diario.find(".pdf") == -1):
             for link in response.css('a::attr(href)'):
